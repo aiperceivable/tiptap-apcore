@@ -3,7 +3,7 @@ import { JSDOM } from "jsdom";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { withApcore, AclGuard } from "tiptap-apcore";
-import type { Registry, AclConfig } from "tiptap-apcore";
+import type { Registry, AclConfig, AuditEntry } from "tiptap-apcore";
 import { toolLoop } from "./toolLoop.js";
 import { applyJsdomGlobals, saveGlobals, restoreGlobals, globalsMutex } from "./jsdomGlobals.js";
 
@@ -275,7 +275,8 @@ export async function chatHandler(req: Request, res: Response): Promise<void> {
       }
       : { role };
 
-    const { executor, registry } = withApcore(editor as unknown as import("tiptap-apcore").EditorLike, { acl: aclConfig, includeUnsafe: false });
+    const auditTrail: AuditEntry[] = [];
+    const { executor, registry } = withApcore(editor as unknown as import("tiptap-apcore").EditorLike, { acl: aclConfig, includeUnsafe: false, audit: (entry: AuditEntry) => { auditTrail.push(entry); } });
 
     // Filter registry so AI only sees commands it can actually call.
     // This prevents the AI from discovering and attempting restricted commands.
@@ -293,6 +294,7 @@ export async function chatHandler(req: Request, res: Response): Promise<void> {
       reply: result.reply,
       updatedHtml: editor.getHTML(),
       toolCalls: result.toolCalls,
+      audit: auditTrail,
     });
   } catch (err: unknown) {
     console.error("Chat handler error:", err);

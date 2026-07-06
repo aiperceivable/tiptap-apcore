@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { LogEntry } from "./ToolPanel";
+import type { AuditEntry } from "tiptap-apcore";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -24,6 +25,7 @@ interface ChatPanelProps {
   role: "readonly" | "editor" | "admin";
   onEditorUpdate: (html: string) => void;
   onLog: (entry: LogEntry) => void;
+  onAudit: (entries: AuditEntry[]) => void;
   onUndo: () => void;
   onClearHistory: () => void;
   historyCount: number;
@@ -38,6 +40,7 @@ export default function ChatPanel({
   role,
   onEditorUpdate,
   onLog,
+  onAudit,
   onUndo,
   onClearHistory,
   historyCount,
@@ -128,6 +131,11 @@ export default function ChatPanel({
       // Update editor with new HTML
       if (data.updatedHtml) {
         onEditorUpdate(data.updatedHtml);
+      }
+
+      // Surface the server-side ACL audit trail (the AI's tool calls) in the panel.
+      if (Array.isArray(data.audit)) {
+        onAudit(data.audit as AuditEntry[]);
       }
 
       // Add assistant response

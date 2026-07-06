@@ -6,11 +6,15 @@ import {
   TiptapAPCore,
   type Registry,
   type Executor,
+  type AuditEntry,
+  type PreflightResult,
+  type Change,
 } from "tiptap-apcore";
 import Editor from "./components/Editor";
 import ToolPanel from "./components/ToolPanel";
 import type { LogEntry } from "./components/ToolPanel";
 import AclSwitcher from "./components/AclSwitcher";
+import AuditPanel from "./components/AuditPanel";
 import ChatPanel from "./components/ChatPanel";
 import MCPDemo from "./components/MCPDemo";
 
@@ -26,8 +30,19 @@ export default function App() {
   const apcoreRef = useRef<TiptapAPCore | null>(null);
   const htmlHistoryRef = useRef<string[]>([]);
 
+  const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
+  const [remoteAudit, setRemoteAudit] = useState<AuditEntry[]>([]);
+  const [pendingPreview, setPendingPreview] = useState<PreflightResult | null>(null);
+
   const addLog = useCallback((entry: LogEntry) => {
     setLogs((prev) => [entry, ...prev].slice(0, 100));
+    // Refresh the ACL audit trail - every call source routes through addLog.
+    setAuditLog(apcoreRef.current?.getAuditLog() ?? []);
+  }, []);
+
+  /** Merge the server-side ACL audit trail (AI tool calls) into the panel. */
+  const handleChatAudit = useCallback((entries: AuditEntry[]) => {
+    setRemoteAudit((prev) => [...prev, ...entries]);
   }, []);
 
   /** Initialize or re-initialize APCore when editor is ready or role changes */
@@ -35,7 +50,7 @@ export default function App() {
     (editor: TiptapEditor, currentRole: "readonly" | "editor" | "admin") => {
       try {
         if (!apcoreRef.current) {
-          const apcore = new TiptapAPCore(editor, { acl: { role: currentRole } });
+          const apcore = new TiptapAPCore(editor, { acl: { role: currentRole }, audit: true });
           apcoreRef.current = apcore;
           setRegistry(apcore.registry);
           setExecutor(apcore.executor);
@@ -170,19 +185,25 @@ export default function App() {
     }
   }
 
-  function demoClearDocument() {
-    // Show confirmation dialog -- APCore intercepts destructive ops
+  async function demoClearDocument() {
+    // Preview the destructive op via the SDK before executing it. validate()
+    // predicts the changes and reports whether approval is required, WITHOUT
+    // touching the document -- this is what drives the confirmation dialog.
+    const apcore = apcoreRef.current;
+    if (!apcore) return;
+    const preview = await apcore.validate("tiptap.destructive.clearContent", {});
+    setPendingPreview(preview);
     setShowConfirm(true);
     addLog({
       type: "info",
-      message:
-        "Destructive operation intercepted! Showing confirmation dialog...",
+      message: `Destructive op intercepted via validate(): requiresApproval=${preview.requiresApproval}, ${preview.predictedChanges?.length ?? 0} predicted change(s)`,
       timestamp: Date.now(),
     });
   }
 
   async function confirmClear() {
     setShowConfirm(false);
+    setPendingPreview(null);
     if (!executor) return;
     try {
       await executor.call("tiptap.destructive.clearContent", {});
@@ -199,6 +220,7 @@ export default function App() {
 
   function cancelClear() {
     setShowConfirm(false);
+    setPendingPreview(null);
     addLog({
       type: "info",
       message: "Destructive operation cancelled by user",
@@ -304,6 +326,11 @@ export default function App() {
           {/* Left: ACL + Module panel */}
           <div>
             <AclSwitcher role={role} onChange={handleRoleChange} />
+            <AuditPanel
+              entries={[...auditLog, ...remoteAudit].sort((a, b) =>
+                a.timestamp.localeCompare(b.timestamp),
+              )}
+            />
             <ToolPanel registry={registry} executor={executor} onLog={addLog} />
           </div>
 
@@ -316,6 +343,7 @@ export default function App() {
             role={role}
             onEditorUpdate={handleEditorUpdate}
             onLog={addLog}
+            onAudit={handleChatAudit}
             onUndo={handleUndo}
             onClearHistory={handleClearHistory}
             historyCount={historyCount}
@@ -404,13 +432,33 @@ export default function App() {
       {showConfirm && (
         <div className="dialog-overlay" onClick={cancelClear}>
           <div className="dialog-box" onClick={(e) => e.stopPropagation()}>
-            <h3>Confirm Clear?</h3>
+            <h3>Approve destructive action?</h3>
             <p>
-              APCore has intercepted a destructive action. AI is attempting to clear the entire document.
-              <br />
-              This action is marked as <code>destructive: true</code> and{" "}
-              <code>requires_approval: true</code>.
+              APCore intercepted this call and ran <code>validate()</code> to
+              preview it — <strong>without modifying the document</strong>.
             </p>
+            {pendingPreview && (
+              <div className="preview-box">
+                <div className="preview-flag">
+                  requiresApproval:{" "}
+                  <code>{String(pendingPreview.requiresApproval)}</code>
+                </div>
+                <ul className="preview-changes">
+                  {(pendingPreview.predictedChanges ?? []).map((c: Change, i: number) => (
+                    <li key={i} className="preview-change">
+                      <span className="preview-action">{c.action}</span>
+                      <span className="preview-target">{c.target}</span>
+                      <span className="preview-summary">{c.summary}</span>
+                      {typeof c.before === "string" && c.before && (
+                        <div className="preview-snapshot">
+                          before: <code>{c.before}</code>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="dialog-actions">
               <button className="btn-cancel" onClick={cancelClear}>
                 Cancel

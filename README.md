@@ -15,6 +15,8 @@
 - **OpenAI Function Calling** — `toOpenaiTools(executor)` exports tool definitions for GPT
 - **Role-based ACL** — `readonly`, `editor`, `admin` roles with tag-level and module-level overrides
 - **Safety annotations** — every command tagged `readonly`, `destructive`, `idempotent`, `requiresApproval`, `openWorld`, `streaming`
+- **Preview & approval** — `apcore.validate()` predicts a command's effects *before* running it; over MCP this drives the `__apcore_module_preview` meta-tool and gates high-risk commands behind human approval automatically
+- **Audit logging** — opt-in structured `allow` / `deny` audit trail (`audit: true` → `apcore.getAuditLog()`, or supply your own logger)
 - **Strict JSON Schemas** — `inputSchema` + `outputSchema` with `additionalProperties: false` for all known commands
 - **Dynamic re-discovery** — call `apcore.refresh()` or `registry.discover()` to pick up extensions added at runtime
 - **Dynamic ACL** — call `apcore.setAcl()` to switch roles without recreating the instance
@@ -151,6 +153,80 @@ apcore.setAcl({ role: "admin" });
 **Precedence:** `denyModules` > `allowModules` > `denyTags` > `allowTags` > role
 
 > **Note:** `allowModules` is additive — it grants access to listed modules but does not deny unlisted ones. Combine with a role to restrict the baseline.
+
+## Preview & Approval (Safety)
+
+Before executing a command, an AI agent can ask **"what would this change?"** via
+`validate()` (aka `preflight()`). It runs the same checks as `call()` — editor
+readiness, module existence, ACL, and input validation — **without touching the
+document**, and returns a structured prediction of the effects.
+
+```typescript
+const result = await apcore.validate("tiptap.destructive.setContent", {
+  value: "<p>Replaced</p>",
+});
+
+// result.valid            → true
+// result.requiresApproval → true   (sourced from the command's annotations)
+// result.checks           → [{ check: "editor_ready", passed: true }, ...]
+// result.predictedChanges → [{
+//   action: "replace",
+//   target: "editor.content",
+//   summary: "Replace all editor content",
+//   before: "<p>Hello world</p>",   // truncated snapshot of current content
+//   after:  "<p>Replaced</p>",
+// }]
+
+if (result.valid && !result.requiresApproval) {
+  await apcore.call("tiptap.destructive.setContent", { value: "<p>Replaced</p>" });
+}
+```
+
+Predicted `Change` records are produced for destructive and content-mutating
+commands (`clearContent`, `setContent`, `deleteSelection`, `deleteRange`,
+`deleteCurrentNode`, `cut`, `deleteNode`, `insertContent`, `insertContentAt`,
+`setLink`). Read-only, formatting, and selection commands report an empty list.
+
+### Automatic MCP preview & approval
+
+This is powered by the apcore `Executor.validate()` contract. When you pass the
+executor to `serve()`, **apcore-mcp exposes the `__apcore_module_preview`
+meta-tool and gates commands whose `requiresApproval` annotation is `true`
+behind its elicitation-based approval flow** — no extra wiring required. All six
+`destructive` commands are annotated `requiresApproval: true` out of the box.
+
+```typescript
+import { serve } from "tiptap-apcore/server";
+await serve(apcore.executor);   // preview meta-tool + approval flow enabled automatically
+```
+
+## Audit Logging
+
+Opt in to a structured audit trail of every ACL `allow` / `deny` decision.
+
+```typescript
+// Built-in in-memory collector
+const apcore = new TiptapAPCore(editor, { acl: { role: "editor" }, audit: true });
+
+await apcore.call("tiptap.query.getHTML", {});                  // allow
+await apcore.call("tiptap.destructive.clearContent", {}).catch(() => {}); // deny
+
+apcore.getAuditLog();
+// [
+//   { timestamp: "2026-07-06T...", targetId: "tiptap.query.getHTML",
+//     decision: "allow", roles: ["editor"], reason: "", ... },
+//   { timestamp: "2026-07-06T...", targetId: "tiptap.destructive.clearContent",
+//     decision: "deny", roles: ["editor"], reason: "Role 'editor' does not permit ...", ... },
+// ]
+
+// Or route entries to your own sink (apcore-js AuditLogger)
+new TiptapAPCore(editor, {
+  audit: (entry) => myLogger.info("acl", entry),
+});
+```
+
+Entries follow the apcore-js `AuditEntry` wire shape (the TipTap module ID is the
+`targetId`), so they interoperate with the rest of the apcore ecosystem.
 
 ## MCP Server
 

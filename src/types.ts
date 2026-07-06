@@ -14,6 +14,10 @@ export type {
 } from "apcore-mcp";
 
 import type { ModuleAnnotations, JsonSchema } from "apcore-mcp";
+import type { AuditLogger } from "apcore-js";
+
+/** Structured ACL audit logger, re-exported from apcore-js. */
+export type { AuditLogger, AuditEntry } from "apcore-js";
 
 /** Minimal logger interface for diagnostic output */
 export interface Logger {
@@ -93,6 +97,13 @@ export interface ApcoreOptions {
   logger?: Logger;
   /** Optional HTML sanitizer applied to insertContent/setContent values */
   sanitizeHtml?: (html: string) => string;
+  /**
+   * Structured audit logging for ACL decisions. Pass `true` to record every
+   * allow/deny decision in an in-memory apcore-js audit log (queryable via
+   * {@link TiptapAPCore.getAuditLog}), or supply your own {@link AuditLogger}.
+   * Defaults to disabled.
+   */
+  audit?: boolean | AuditLogger;
 }
 
 /** Return value of withApcore() */

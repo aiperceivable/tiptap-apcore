@@ -3,7 +3,10 @@ import type {
   EditorLike,
   AclConfig,
   ModuleDescriptor,
+  AuditLogger,
+  AuditEntry,
 } from "../types.js";
+import type { PreflightResult } from "apcore-js";
 import { ExtensionScanner } from "../discovery/index.js";
 import { ModuleBuilder } from "../builder/index.js";
 import { TiptapRegistry } from "./TiptapRegistry.js";
@@ -27,6 +30,8 @@ export class TiptapAPCore {
   private _aclGuard: AclGuard;
   private _scanner: ExtensionScanner;
   private _builder: ModuleBuilder;
+  private _auditLogger: AuditLogger | undefined;
+  private _auditEntries: AuditEntry[] | undefined;
 
   constructor(editor: EditorLike, options?: ApcoreOptions) {
     if (editor == null) {
@@ -70,7 +75,14 @@ export class TiptapAPCore {
     this._scanner = new ExtensionScanner(this._options.logger);
     this._builder = new ModuleBuilder(prefix);
     this._registry = new TiptapRegistry();
-    this._aclGuard = new AclGuard(this._options.acl, this._options.logger);
+    const resolvedAudit = this.resolveAuditLogger(this._options.audit);
+    this._auditLogger = resolvedAudit.logger;
+    this._auditEntries = resolvedAudit.entries;
+    this._aclGuard = new AclGuard(
+      this._options.acl,
+      this._options.logger,
+      this._auditLogger,
+    );
     this._executor = new TiptapExecutor(
       editor,
       this._registry,
@@ -95,6 +107,43 @@ export class TiptapAPCore {
     return this._executor;
   }
 
+  /** The structured ACL audit logger, if auditing was enabled via options. */
+  get auditLogger(): AuditLogger | undefined {
+    return this._auditLogger;
+  }
+
+  /**
+   * Return the recorded ACL audit entries (allow/deny decisions).
+   *
+   * Only populated when `audit: true` was passed in the options (which enables
+   * the built-in in-memory collector). When a custom {@link AuditLogger}
+   * function is supplied instead, entries go to that sink and this returns an
+   * empty array — query your own store.
+   */
+  getAuditLog(): AuditEntry[] {
+    return this._auditEntries ? [...this._auditEntries] : [];
+  }
+
+  /**
+   * Resolve the `audit` option into an apcore-js {@link AuditLogger} callback.
+   *
+   * - `true` → a built-in in-memory collector (entries readable via
+   *   {@link getAuditLog}).
+   * - an {@link AuditLogger} function → used directly as the sink.
+   * - falsy → auditing disabled.
+   */
+  private resolveAuditLogger(audit: boolean | AuditLogger | undefined): {
+    logger: AuditLogger | undefined;
+    entries: AuditEntry[] | undefined;
+  } {
+    if (!audit) return { logger: undefined, entries: undefined };
+    if (audit === true) {
+      const entries: AuditEntry[] = [];
+      return { logger: (entry) => { entries.push(entry); }, entries };
+    }
+    return { logger: audit, entries: undefined };
+  }
+
   /**
    * Execute an editor command via APCore.
    *
@@ -107,6 +156,33 @@ export class TiptapAPCore {
     inputs: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     return this._executor.call(moduleId, inputs);
+  }
+
+  /**
+   * Validate a command and predict its effects WITHOUT executing it.
+   *
+   * Delegates to the executor's apcore `validate()` contract, returning a
+   * PreflightResult with validity, approval requirement, and predicted changes.
+   * This is what powers the apcore-mcp preview meta-tool and approval flow.
+   *
+   * @param moduleId - The module ID (e.g., 'tiptap.destructive.clearContent')
+   * @param inputs - Input arguments for the command
+   */
+  async validate(
+    moduleId: string,
+    inputs: Record<string, unknown>,
+  ): Promise<PreflightResult> {
+    return this._executor.validate(moduleId, inputs);
+  }
+
+  /**
+   * Preflight — alias for {@link validate}, mirroring the apcore-js Executor API.
+   */
+  async preflight(
+    moduleId: string,
+    inputs: Record<string, unknown>,
+  ): Promise<PreflightResult> {
+    return this._executor.preflight(moduleId, inputs);
   }
 
   /**

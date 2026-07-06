@@ -27,6 +27,8 @@ export type {
   ModuleDescriptor,
   ModuleAnnotations,
   JsonSchema,
+  AuditLogger,
+  AuditEntry,
 } from "./types.js";
 export { TiptapModuleError, ErrorCodes } from "./errors/index.js";
 export { TiptapRegistry } from "./runtime/index.js";
@@ -43,3 +45,13 @@ export type {
   OpenAIToolDef,
 } from "apcore-mcp";
 export { REGISTRY_EVENTS, MODULE_ID_PATTERN } from "apcore-mcp";
+
+// Re-export apcore-js safety/preview contract types. These describe the result
+// of TiptapAPCore.validate()/preflight(), which drive the apcore-mcp preview
+// meta-tool and approval flow.
+export type {
+  PreflightResult,
+  PreflightCheckResult,
+  PreviewResult,
+  Change,
+} from "apcore-js";

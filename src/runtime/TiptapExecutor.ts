@@ -1,7 +1,11 @@
 import type { Executor, EditorLike, ChainLike } from "../types.js";
+import type { PreflightResult, PreflightCheckResult, Change } from "apcore-js";
 import type { TiptapRegistry } from "./TiptapRegistry.js";
 import { AclGuard } from "../security/AclGuard.js";
 import { TiptapModuleError, ErrorCodes } from "../errors/index.js";
+
+/** Max length of a content snapshot / preview string embedded in a Change. */
+const MAX_PREVIEW_LEN = 500;
 
 // Re-export for backwards compatibility
 export type { EditorLike, ChainLike } from "../types.js";
@@ -107,6 +111,225 @@ export class TiptapExecutor implements Executor {
 
   async callAsync(moduleId: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
     return this.call(moduleId, inputs);
+  }
+
+  /**
+   * Validate inputs and predict effects WITHOUT executing the command.
+   *
+   * Implements the apcore Executor `validate()` contract (PROTOCOL_SPEC §5.6).
+   * When this executor is passed to `serve()`, apcore-mcp exposes the
+   * `__apcore_module_preview` meta-tool and gates high-risk calls behind its
+   * elicitation-based approval flow — both driven entirely by this method.
+   *
+   * @returns A PreflightResult describing whether the call is valid, whether it
+   *   requires human approval, and a structured prediction of its changes.
+   */
+  async validate(
+    moduleId: string,
+    inputs: Record<string, unknown>,
+  ): Promise<PreflightResult> {
+    const checks: PreflightCheckResult[] = [];
+    const errors: Array<Record<string, unknown>> = [];
+
+    // 1. Editor readiness
+    if (this.editor.isDestroyed) {
+      checks.push({ check: "editor_ready", passed: false, error: { editorDestroyed: true } });
+      errors.push({ code: ErrorCodes.EDITOR_NOT_READY, message: "Editor is not ready" });
+      return { valid: false, checks, requiresApproval: false, errors };
+    }
+    checks.push({ check: "editor_ready", passed: true });
+
+    // 2. Module resolution
+    const descriptor = this.registry.getDefinition(moduleId);
+    if (!descriptor) {
+      checks.push({ check: "module_exists", passed: false });
+      errors.push({ code: ErrorCodes.MODULE_NOT_FOUND, message: `Module '${moduleId}' not found` });
+      return { valid: false, checks, requiresApproval: false, errors };
+    }
+    checks.push({ check: "module_exists", passed: true });
+
+    // 3. Access control (non-throwing — mirrors the check enforced by call())
+    const aclAllowed = this.aclGuard.isAllowed(moduleId, descriptor);
+    checks.push({ check: "acl", passed: aclAllowed });
+    if (!aclAllowed) {
+      errors.push({
+        code: ErrorCodes.ACL_DENIED,
+        message: `Access denied: module '${moduleId}' is not permitted`,
+      });
+    }
+
+    // 4. Input validation (dry — reuses the same arg-building logic as call())
+    const inputError = this.dryValidateInputs(moduleId, inputs);
+    checks.push({ check: "input_schema", passed: inputError == null, error: inputError ?? undefined });
+    if (inputError) {
+      errors.push(inputError);
+    }
+
+    // 5. Approval requirement, sourced from the module's safety annotations
+    const requiresApproval = descriptor.annotations?.requiresApproval ?? false;
+
+    // 6. Predicted changes — only meaningful when the call would actually run
+    const predictedChanges = errors.length === 0 ? this.predictChanges(moduleId, inputs) : [];
+
+    return {
+      valid: errors.length === 0,
+      checks,
+      requiresApproval,
+      errors,
+      predictedChanges,
+    };
+  }
+
+  /**
+   * Preflight — apcore-js API-parity alias for {@link validate}. Validates the
+   * call without side effects and returns the same PreflightResult.
+   */
+  async preflight(
+    moduleId: string,
+    inputs: Record<string, unknown>,
+  ): Promise<PreflightResult> {
+    return this.validate(moduleId, inputs);
+  }
+
+  /**
+   * Run the same input validation that call() performs, but without executing
+   * the command. Returns a structured error record when inputs are invalid,
+   * or null when they pass.
+   */
+  private dryValidateInputs(
+    moduleId: string,
+    inputs: Record<string, unknown>,
+  ): Record<string, unknown> | null {
+    const category = this.extractCategory(moduleId);
+    const commandName = this.extractCommandName(moduleId);
+    try {
+      if (category === "query") {
+        this.validateQueryInputs(commandName, inputs, moduleId);
+      } else if (commandName === "selectText") {
+        requireString(inputs, "text", moduleId);
+      } else if (!FORBIDDEN_PROPS.has(commandName)) {
+        // buildArgs performs the same required-field and URL-safety checks as
+        // call(), and has no side effects, so it doubles as a dry validator.
+        this.buildArgs(commandName, inputs, moduleId);
+      }
+      return null;
+    } catch (err) {
+      if (err instanceof TiptapModuleError) {
+        return { code: err.code, message: err.message, ...(err.details ?? {}) };
+      }
+      return {
+        code: ErrorCodes.SCHEMA_VALIDATION_ERROR,
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  /** Validate required inputs for the built-in query commands. */
+  private validateQueryInputs(
+    commandName: string,
+    inputs: Record<string, unknown>,
+    moduleId: string,
+  ): void {
+    switch (commandName) {
+      case "isActive":
+        requireString(inputs, "name", moduleId);
+        break;
+      case "getAttributes":
+        requireString(inputs, "typeOrName", moduleId);
+        break;
+      // Remaining query commands take no required inputs.
+    }
+  }
+
+  /**
+   * Produce a structured prediction of the side effects a command would have,
+   * per the apcore preview contract. Only destructive and content-mutating
+   * commands report changes; read-only, formatting, and selection commands
+   * return an empty list.
+   */
+  private predictChanges(moduleId: string, inputs: Record<string, unknown>): Change[] {
+    const commandName = this.extractCommandName(moduleId);
+    switch (commandName) {
+      case "clearContent":
+        return [{
+          action: "delete",
+          target: "editor.content",
+          summary: "Clear all editor content",
+          before: this.snapshot(),
+        }];
+      case "setContent":
+        return [{
+          action: "replace",
+          target: "editor.content",
+          summary: "Replace all editor content",
+          before: this.snapshot(),
+          after: this.truncate(inputs.value),
+        }];
+      case "deleteSelection":
+        return [{
+          action: "delete",
+          target: "editor.selection",
+          summary: "Delete the current text selection",
+        }];
+      case "deleteRange":
+        return [{
+          action: "delete",
+          target: `editor.range[${inputs.from}..${inputs.to}]`,
+          summary: `Delete the document range from ${inputs.from} to ${inputs.to}`,
+        }];
+      case "deleteCurrentNode":
+        return [{
+          action: "delete",
+          target: "editor.currentNode",
+          summary: "Delete the node at the current cursor position",
+        }];
+      case "cut":
+        return [{
+          action: "delete",
+          target: "editor.selection",
+          summary: "Cut (remove) the current selection",
+        }];
+      case "deleteNode":
+        return [{
+          action: "delete",
+          target: `editor.node[${String(inputs.typeOrName)}]`,
+          summary: `Delete the nearest '${String(inputs.typeOrName)}' node`,
+        }];
+      case "insertContent":
+        return [{
+          action: "insert",
+          target: "editor.selection",
+          summary: "Insert content at the cursor",
+          after: this.truncate(inputs.value),
+        }];
+      case "insertContentAt":
+        return [{
+          action: "insert",
+          target: `editor.position[${inputs.position}]`,
+          summary: `Insert content at position ${inputs.position}`,
+          after: this.truncate(inputs.value),
+        }];
+      case "setLink":
+        return [{
+          action: "write",
+          target: "editor.selection",
+          summary: `Set link href to '${String(inputs.href)}'`,
+          after: inputs.href,
+        }];
+      default:
+        return [];
+    }
+  }
+
+  /** Truncated snapshot of the editor's current HTML, for change previews. */
+  private snapshot(): string {
+    return this.truncate(this.editor.getHTML());
+  }
+
+  /** Coerce a value to a length-bounded preview string. */
+  private truncate(value: unknown): string {
+    const str = typeof value === "string" ? value : JSON.stringify(value ?? null);
+    return str.length > MAX_PREVIEW_LEN ? `${str.slice(0, MAX_PREVIEW_LEN)}...` : str;
   }
 
   private extractCategory(moduleId: string): string {

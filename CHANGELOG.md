@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-06
+
+### Added
+
+- **Preview & approval (safety) support.** `TiptapExecutor` now implements the apcore `Executor.validate()` contract (PROTOCOL_SPEC §5.6). Passing the executor to `serve()` automatically enables apcore-mcp's `__apcore_module_preview` meta-tool and its elicitation-based approval flow — AI agents can ask "what would this change?" and high-risk commands are gated behind human approval, with no extra wiring.
+  - `TiptapAPCore.validate(moduleId, inputs)` / `preflight(moduleId, inputs)` — validate a command and predict its effects **without executing it**. Returns a `PreflightResult` with per-step `checks` (`editor_ready`, `module_exists`, `acl`, `input_schema`), a `requiresApproval` flag from the module's annotations, and structured `predictedChanges`.
+  - Predicted `Change` records (`action`, `target`, `summary`, `before`, `after`) are produced for destructive and content-mutating commands (`clearContent`, `setContent`, `deleteSelection`, `deleteRange`, `deleteCurrentNode`, `cut`, `deleteNode`, `insertContent`, `insertContentAt`, `setLink`), including truncated HTML snapshots for full-document replacements.
+- **Structured ACL audit logging** via the new `audit` option on `TiptapAPCore`:
+  - `audit: true` records every allow/deny decision in a built-in in-memory log, readable via `TiptapAPCore.getAuditLog()`.
+  - `audit: <fn>` routes decisions to a custom apcore-js `AuditLogger` callback.
+  - Entries follow the apcore-js `AuditEntry` wire shape (module ID as `targetId`) for cross-ecosystem consistency.
+- Public type exports: `PreflightResult`, `PreflightCheckResult`, `PreviewResult`, `Change`, `AuditLogger`, `AuditEntry`.
+
+### Changed
+
+- Upgraded `apcore-js` peer dependency from `>=0.14.0` to `>=0.25.0`.
+- Upgraded `apcore-mcp` peer/dev dependency from `^0.10.0` to `^0.17.0`.
+- Existing `call()` behavior is unchanged; all new capabilities are additive and backward compatible. All re-exports (`serve`, `asyncServe`, `toOpenaiTools`, `resolveRegistry`, `resolveExecutor`) are unchanged.
+
+### Dependencies
+
+- **Peer**: `apcore-js` >=0.25.0 (was >=0.14.0), `apcore-mcp` ^0.17.0 (was ^0.10.0).
+- `apcore-toolkit` 0.9.1 now enters the tree transitively via `apcore-mcp`.
+
 ## [0.3.1] - 2026-03-22
 
 ### Changed

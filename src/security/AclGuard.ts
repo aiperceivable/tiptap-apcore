@@ -1,4 +1,4 @@
-import type { AclConfig, Logger, ModuleDescriptor } from "../types.js";
+import type { AclConfig, Logger, ModuleDescriptor, AuditLogger } from "../types.js";
 import { TiptapModuleError, ErrorCodes } from "../errors/index.js";
 
 const ROLE_TAGS: Record<string, string[]> = {
@@ -10,10 +10,12 @@ const ROLE_TAGS: Record<string, string[]> = {
 export class AclGuard {
   private config: AclConfig | undefined;
   private logger: Logger | undefined;
+  private auditLogger: AuditLogger | undefined;
 
-  constructor(config?: AclConfig, logger?: Logger) {
+  constructor(config?: AclConfig, logger?: Logger, auditLogger?: AuditLogger) {
     this.config = config;
     this.logger = logger;
+    this.auditLogger = auditLogger;
   }
 
   /** Update ACL configuration at runtime */
@@ -23,8 +25,13 @@ export class AclGuard {
   }
 
   check(moduleId: string, descriptor: ModuleDescriptor): void {
-    if (!this.isAllowed(moduleId, descriptor)) {
-      const reason = this.getDenialReason(moduleId, descriptor);
+    const allowed = this.isAllowed(moduleId, descriptor);
+    const reason = allowed ? undefined : this.getDenialReason(moduleId, descriptor);
+
+    // Record the enforcement decision in the structured audit trail (if any).
+    this.audit(moduleId, allowed ? "allow" : "deny", reason);
+
+    if (!allowed) {
       this.logger?.warn(`ACL denied: ${moduleId}`, { reason });
       throw new TiptapModuleError(
         ErrorCodes.ACL_DENIED,
@@ -32,6 +39,36 @@ export class AclGuard {
         { moduleId },
       );
     }
+  }
+
+  /**
+   * Append an ACL decision to the structured audit log, when configured.
+   *
+   * Emits an apcore-js `AuditEntry` (cross-ecosystem wire shape) with the
+   * TipTap module ID as the `targetId`. Fields that have no meaning in the
+   * editor domain (caller identity, named rules, trace/call-depth) are left
+   * empty/null per the entry contract.
+   */
+  private audit(
+    moduleId: string,
+    decision: "allow" | "deny",
+    reason?: string,
+  ): void {
+    if (!this.auditLogger) return;
+    this.auditLogger({
+      timestamp: new Date().toISOString(),
+      callerId: "",
+      targetId: moduleId,
+      decision,
+      reason: reason ?? "",
+      matchedRule: null,
+      matchedRuleIndex: null,
+      identityType: null,
+      roles: this.config?.role ? [this.config.role] : [],
+      callDepth: null,
+      traceId: null,
+      handlerError: null,
+    });
   }
 
   isAllowed(moduleId: string, descriptor: ModuleDescriptor): boolean {

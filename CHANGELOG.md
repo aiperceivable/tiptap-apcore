@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-07-16
+
+ACL demo + dependency uplift to the aligned apcore-js 0.26.0 / apcore-mcp 0.17.2 governance train. All 946 tests pass.
+
+### Added
+
+- **ACL demo (`examples/acl_demo/`)** — the cross-integration `examples/acl_demo/` pattern, in tiptap's own domain: a headless (mock-editor) demonstration of tiptap's tag-based role ACL — `readonly` may only run `query` commands, `editor` may also `format` but not `destructive`, `admin` may run everything. Covered by `tests/integration/acl-demo.test.ts` (4 cases). Unlike the web-framework integrations it uses tiptap's native `readonly` / `editor` / `admin` roles and editor commands rather than the `X-Roles` + `orders.*` contract.
+
+### Changed
+
+- **Dependency floors raised to the aligned governance train and loosened from caret to `>=`** (so future apcore minor releases need no downstream edits): `apcore-js >= 0.26.0` (was `^0.25.0`), `apcore-mcp >= 0.17.2` (was `^0.17.0`).
+
 ## [0.4.0] - 2026-07-06
 
 ### Added

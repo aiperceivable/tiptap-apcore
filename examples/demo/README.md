@@ -15,7 +15,7 @@ A full-stack demo showcasing AI-powered TipTap editor control via APCore modules
 ## Architecture
 
 ```
-demo/
+examples/demo/
 ├── frontend/    Vite + React (:5173)
 │   └── src/     AclSwitcher | ToolPanel | Editor | ChatPanel | MCPDemo
 ├── server/      Express (:8000)
@@ -84,10 +84,10 @@ npm run build
 
 ```bash
 # Still in the project root
-cp demo/.env.example demo/.env
+cp examples/demo/.env.example examples/demo/.env
 ```
 
-Edit `demo/.env` and fill in your API key(s):
+Edit `examples/demo/.env` and fill in your API key(s):
 
 ```env
 LLM_MODEL=openai:gpt-4o          # provider:model format
@@ -99,7 +99,7 @@ OPENAI_API_KEY=sk-proj-...        # set for OpenAI models
 ### Step 3: Start the backend (Terminal 1)
 
 ```bash
-cd demo/server
+cd examples/demo/server
 npm install
 npm run dev
 ```
@@ -113,7 +113,7 @@ tiptap-apcore demo server running on http://localhost:8000
 ### Step 4: Start the frontend (Terminal 2)
 
 ```bash
-cd demo/frontend
+cd examples/demo/frontend
 npm install
 npm run dev
 ```
@@ -130,7 +130,7 @@ Open http://localhost:5173 in your browser.
 ## Quick Start (Docker)
 
 ```bash
-cd demo
+cd examples/demo
 
 # 1. Configure API keys
 cp .env.example .env
@@ -147,7 +147,7 @@ docker compose up
 
 ## Environment Variables
 
-All env vars are read from `demo/.env`.
+All env vars are read from `examples/demo/.env`.
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
@@ -203,10 +203,10 @@ ACL is enforced **server-side** — even if the AI tries to call a blocked tool,
 
 ## Troubleshooting
 
-**"API key is missing"** — Make sure `demo/.env` exists and has the key for your chosen provider. The backend reads from `demo/.env`, not `demo/server/.env`.
+**"API key is missing"** — Make sure `examples/demo/.env` exists and has the key for your chosen provider. The backend reads from `examples/demo/.env`, not `examples/demo/server/.env`.
 
 **"429 quota exceeded"** — Your OpenAI account has insufficient credits. Check [billing](https://platform.openai.com/settings/organization/billing).
 
-**Browser console error about `global` or `buffer`** — Run `npm run dev` from `demo/frontend/` (not the project root). The Vite config includes necessary browser shims.
+**Browser console error about `global` or `buffer`** — Run `npm run dev` from `examples/demo/frontend/` (not the project root). The Vite config includes necessary browser shims.
 
 **Tool calls return errors but AI still responds** — This is expected. The AI receives the error message and tries to explain what happened or suggest alternatives.

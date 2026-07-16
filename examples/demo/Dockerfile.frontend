@@ -14,15 +14,15 @@ RUN pnpm install --frozen-lockfile && pnpm run build
 
 # 2. Copy frontend package files and install
 #    "tiptap-apcore": "file:../.." resolves to /app
-COPY demo/frontend/package.json demo/frontend/pnpm-lock.yaml ./demo/frontend/
+COPY examples/demo/frontend/package.json examples/demo/frontend/pnpm-lock.yaml ./demo/frontend/
 WORKDIR /app/demo/frontend
 RUN pnpm install --frozen-lockfile
 
 # 3. Copy frontend source
-COPY demo/frontend/src/ ./src/
-COPY demo/frontend/tsconfig.json ./
-COPY demo/frontend/vite.config.ts ./
-COPY demo/frontend/index.html ./
+COPY examples/demo/frontend/src/ ./src/
+COPY examples/demo/frontend/tsconfig.json ./
+COPY examples/demo/frontend/vite.config.ts ./
+COPY examples/demo/frontend/index.html ./
 
 EXPOSE 5173
 

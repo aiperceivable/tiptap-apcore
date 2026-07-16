@@ -14,13 +14,13 @@ RUN pnpm install --frozen-lockfile && pnpm run build
 
 # 2. Copy server package files and install
 #    "tiptap-apcore": "file:../.." resolves to /app
-COPY demo/server/package.json demo/server/pnpm-lock.yaml ./demo/server/
+COPY examples/demo/server/package.json examples/demo/server/pnpm-lock.yaml ./demo/server/
 WORKDIR /app/demo/server
 RUN pnpm install --frozen-lockfile
 
 # 3. Copy server source and build
-COPY demo/server/src/ ./src/
-COPY demo/server/tsconfig.json ./
+COPY examples/demo/server/src/ ./src/
+COPY examples/demo/server/tsconfig.json ./
 RUN pnpm run build
 
 # REST API on /api/*, MCP endpoint on /mcp, Tool Explorer on /explorer

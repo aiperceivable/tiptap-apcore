@@ -16,6 +16,7 @@ ACL demo + dependency uplift to the aligned apcore-js 0.26.0 / apcore-mcp 0.17.2
 ### Changed
 
 - **Dependency floors raised to the aligned governance train and loosened from caret to `>=`** (so future apcore minor releases need no downstream edits): `apcore-js >= 0.26.0` (was `^0.25.0`), `apcore-mcp >= 0.17.2` (was `^0.17.0`).
+- **Full-stack demo moved to `examples/demo/`** (was `demo/`), consolidating all examples under `examples/` alongside the new `examples/acl_demo/`. README, Dockerfiles, docker-compose, and the demo README were updated to the new paths.
 
 ## [0.4.0] - 2026-07-06
 

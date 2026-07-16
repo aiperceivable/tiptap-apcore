@@ -519,15 +519,15 @@ TipTap's official AI solution is the **[AI Toolkit](https://tiptap.dev/docs/ai-t
 
 ## Demo
 
-The `demo/` directory contains a full-stack example with two modes:
+The `examples/demo/` directory contains a full-stack example with two modes:
 
 ```bash
-cd demo/server && npm install && npm run dev   # Terminal 1
-cd demo/frontend && npm install && npm run dev # Terminal 2
+cd examples/demo/server && npm install && npm run dev   # Terminal 1
+cd examples/demo/frontend && npm install && npm run dev # Terminal 2
 # Open http://localhost:5173
 ```
 
-Set `LLM_MODEL` (e.g. `openai:gpt-4o`, `anthropic:claude-sonnet-4-5`) in `demo/.env`. See [`demo/README.md`](demo/README.md) for details.
+Set `LLM_MODEL` (e.g. `openai:gpt-4o`, `anthropic:claude-sonnet-4-5`) in `examples/demo/.env`. See [`examples/demo/README.md`](examples/demo/README.md) for details.
 
 ### AI Editor Demo tab
 

@@ -1,7 +1,7 @@
 /**
  * Integration tests for the demo server API.
  *
- * Prerequisites (demo/.env):
+ * Prerequisites (examples/demo/.env):
  *   LLM_MODEL=<provider>:<model>      e.g. google:gemini-2.5-pro
  *   GOOGLE_GENERATIVE_AI_API_KEY=...  (if provider is google/gemini)
  *   OPENAI_API_KEY=...                (if provider is openai)
@@ -33,9 +33,9 @@ const apiKey = apiKeyVar ? process.env[apiKeyVar] : undefined;
 const MODEL_READY = !!LLM_MODEL && !!apiKey;
 
 function skipReason(): string {
-  if (!LLM_MODEL) return "LLM_MODEL not set in demo/.env";
+  if (!LLM_MODEL) return "LLM_MODEL not set in examples/demo/.env";
   if (!apiKeyVar) return `Unknown provider '${provider}' in LLM_MODEL`;
-  if (!apiKey) return `${apiKeyVar} not set in demo/.env`;
+  if (!apiKey) return `${apiKeyVar} not set in examples/demo/.env`;
   return "";
 }
 

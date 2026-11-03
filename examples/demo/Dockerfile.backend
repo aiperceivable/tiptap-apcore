@@ -5,7 +5,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 # 1. Copy root package files, patches, and install (builds tiptap-apcore)
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches/ ./patches/
 COPY src/ ./src/
 COPY tsconfig.json ./
@@ -13,9 +13,9 @@ COPY tsconfig.json ./
 RUN pnpm install --frozen-lockfile && pnpm run build
 
 # 2. Copy server package files and install
-#    "tiptap-apcore": "file:../.." resolves to /app
-COPY examples/demo/server/package.json examples/demo/server/pnpm-lock.yaml ./demo/server/
-WORKDIR /app/demo/server
+#    "tiptap-apcore": "file:../../.." resolves to /app
+COPY examples/demo/server/package.json examples/demo/server/pnpm-lock.yaml examples/demo/server/pnpm-workspace.yaml ./examples/demo/server/
+WORKDIR /app/examples/demo/server
 RUN pnpm install --frozen-lockfile
 
 # 3. Copy server source and build

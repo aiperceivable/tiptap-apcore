@@ -6,7 +6,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend/src:/app/demo/frontend/src
+      - ./frontend/src:/app/examples/demo/frontend/src
     depends_on:
       - backend
     environment:

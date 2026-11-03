@@ -17,14 +17,14 @@
     "@tiptap/pm": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
     "ai": "^4.3.19",
-    "apcore-js": "^0.25.0",
-    "apcore-mcp": "^0.17.0",
+    "apcore-js": ">=0.32.3",
+    "apcore-mcp": ">=0.23.4",
     "apdev-js": "^0.2.2",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^4.22.1",
     "jsdom": "^25.0.1",
-    "tiptap-apcore": "file:../.."
+    "tiptap-apcore": "file:../../.."
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

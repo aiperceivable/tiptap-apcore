@@ -46,7 +46,8 @@ export interface EditorLike {
     };
   };
   storage: Record<string, Record<string, unknown>>;
-  commands: Record<string, (...args: unknown[]) => boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  commands: Record<string, (...args: any[]) => boolean>;
   chain(): ChainLike;
   can(): { chain(): ChainLike };
   extensionManager: {

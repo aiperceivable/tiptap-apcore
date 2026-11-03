@@ -69,7 +69,7 @@ You need **two terminals** — one for the backend, one for the frontend.
 
 ### Prerequisites
 
-- Node.js >= 18
+- Node.js >= 20
 - An API key from [OpenAI](https://platform.openai.com/api-keys), [Anthropic](https://console.anthropic.com/settings/keys), and/or [Google AI](https://aistudio.google.com/apikey)
 
 ### Step 1: Build the root package

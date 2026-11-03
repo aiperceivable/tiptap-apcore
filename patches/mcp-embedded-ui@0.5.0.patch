@@ -1,6 +1,6 @@
 diff --git a/dist/html.js b/dist/html.js
---- a/dist/html.js
-+++ b/dist/html.js
+--- a/dist/html.js	2026-11-03 09:35:20
++++ b/dist/html.js	2026-11-03 09:35:20
 @@ -1,9 +1,7 @@
  import { readFileSync } from "node:fs";
  import { join, dirname } from "node:path";
@@ -9,6 +9,6 @@ diff --git a/dist/html.js b/dist/html.js
 -    ? __dirname
 -    : dirname(fileURLToPath(import.meta.url));
 +const __dirname_resolved = dirname(fileURLToPath(import.meta.url));
- export const EXPLORER_HTML_TEMPLATE = readFileSync(join(__dirname_resolved, "explorer.html"), "utf-8");
- const DEFAULT_TITLE = "MCP Tool Explorer";
- function escapeHtml(str) {
+ /**
+  * The raw HTML template.
+  *

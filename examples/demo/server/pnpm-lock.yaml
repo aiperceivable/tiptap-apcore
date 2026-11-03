@@ -30,11 +30,11 @@ importers:
         specifier: ^4.3.19
         version: 4.3.19(react@19.2.7)(zod@3.25.76)
       apcore-js:
-        specifier: ^0.25.0
-        version: 0.25.0
+        specifier: '>=0.32.3'
+        version: 0.32.3
       apcore-mcp:
-        specifier: ^0.17.0
-        version: 0.17.0(@sinclair/typebox@0.34.49)(zod@3.25.76)
+        specifier: '>=0.23.4'
+        version: 0.23.4(@sinclair/typebox@0.34.49)(zod@3.25.76)
       apdev-js:
         specifier: ^0.2.2
         version: 0.2.4(typescript@5.9.3)
@@ -51,8 +51,8 @@ importers:
         specifier: ^25.0.1
         version: 25.0.1
       tiptap-apcore:
-        specifier: file:../..
-        version: file:../..(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(apcore-js@0.25.0)(apcore-mcp@0.17.0(@sinclair/typebox@0.34.49)(zod@3.25.76))
+        specifier: file:../../..
+        version: file:../../..(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(apcore-js@0.32.3)(apcore-mcp@0.23.4(@sinclair/typebox@0.34.49)(zod@3.25.76))
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -737,17 +737,17 @@ packages:
   ajv@8.20.0:
     resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
 
-  apcore-js@0.25.0:
-    resolution: {integrity: sha512-zz8QDsp69e/V0/4lJgkUth2Ikze2xg3BvBmHqYvcu9+ms7f3sunhjgZuOzLo5MK+c3g1Oi4HlCYt+eAJnJBWpg==}
+  apcore-js@0.32.3:
+    resolution: {integrity: sha512-kmIDULt35c4vv9fxopnUomDi2Vvb9TzX4JdO9xfv6+XAE62OxuH4a6cvIQCuu62A5ESsIiwa2evhNX+PbPyqtA==}
     engines: {node: '>=20.0.0'}
 
-  apcore-mcp@0.17.0:
-    resolution: {integrity: sha512-WYqTrdevPfdi/wG2D/x25SP6feO7Ykm8k7N2xbn0LPqGacp9e4alUPng+U9CO0Ck289EcpcV2becq8V9NNPGKQ==}
-    engines: {node: '>=18.0.0'}
+  apcore-mcp@0.23.4:
+    resolution: {integrity: sha512-U6v4vyvj3l5RwjtkSc1s7faiAJjnWLBF3x/Ym7167rPtyat4Kj7af7a6LW+zI6SXcTfLaZ6LuFF7OtnIVcwOhw==}
+    engines: {node: '>=20.0.0'}
     hasBin: true
 
-  apcore-toolkit@0.9.1:
-    resolution: {integrity: sha512-DgaVCPto0MOjSwmrIFNa18JnvxS2jLAVomnAznE9mJJr6T8DiPeX/Td0V5ke3RldszBNaNfCGHZStfp8VYNAog==}
+  apcore-toolkit@0.14.1:
+    resolution: {integrity: sha512-sB0rkV54b2XYz6o2yQWCUZ9KF2YWR+ETXtn1jDjVIvNxy2WNF/+7BDqQBbxbAwwTLz7+iP8WDJ+26RXz2XWEGA==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@sinclair/typebox': '>=0.31.0'
@@ -1226,8 +1226,8 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
-  mcp-embedded-ui@0.4.0:
-    resolution: {integrity: sha512-T94XxjoCWIIg2Ohy7jcXPC/E3/CpqafdliDzsIr6uA9ePes7leTudHZrXyaDvmzL/ehIIRt4NIgl/A+twEuJ9g==}
+  mcp-embedded-ui@0.5.0:
+    resolution: {integrity: sha512-3+0DY1j1Xll37S98XK0aM5ss2Gc92cmdE9PjVruOVHgeN38blCJjL+D/OQJjaeJ3MNbbJQS8ofgXOYXsK7QR4g==}
     engines: {node: '>=18.0.0'}
 
   mdurl@2.0.0:
@@ -1596,13 +1596,13 @@ packages:
     resolution: {integrity: sha512-azl+t0z7pw/z958Gy9svOTuzqIk6xq+NSheJzn5MMWtWTFywIacg2wUlzKFGtt3cthx0r2SxMK0yzJOR0IES7Q==}
     engines: {node: '>=14.0.0'}
 
-  tiptap-apcore@file:../..:
-    resolution: {directory: ../.., type: directory}
-    engines: {node: '>=18.0.0'}
+  tiptap-apcore@file:../../..:
+    resolution: {directory: ../../.., type: directory}
+    engines: {node: '>=20.0.0'}
     peerDependencies:
       '@tiptap/core': ^2.0.0
-      apcore-js: '>=0.25.0'
-      apcore-mcp: ^0.17.0
+      apcore-js: '>=0.32.3'
+      apcore-mcp: '>=0.23.4'
 
   tldts-core@6.1.86:
     resolution: {integrity: sha512-Je6p7pkk+KMzMv2XXKmAE3McmolOQFdxkKw0R8EYNr7sELW46JqnNeTX8ybPiQgvg1ymCoF8LXs5fzFaZvJPTA==}
@@ -2379,30 +2379,31 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  apcore-js@0.25.0:
+  apcore-js@0.32.3:
     dependencies:
       '@sinclair/typebox': 0.34.49
       js-yaml: 4.3.0
       uuid: 11.1.1
 
-  apcore-mcp@0.17.0(@sinclair/typebox@0.34.49)(zod@3.25.76):
+  apcore-mcp@0.23.4(@sinclair/typebox@0.34.49)(zod@3.25.76):
     dependencies:
       '@modelcontextprotocol/sdk': 1.29.0(zod@3.25.76)
-      apcore-js: 0.25.0
-      apcore-toolkit: 0.9.1(@sinclair/typebox@0.34.49)
+      ajv: 8.20.0
+      apcore-js: 0.32.3
+      apcore-toolkit: 0.14.1(@sinclair/typebox@0.34.49)
       jsonwebtoken: 9.0.3
-      mcp-embedded-ui: 0.4.0
+      mcp-embedded-ui: 0.5.0
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - '@sinclair/typebox'
       - supports-color
       - zod
 
-  apcore-toolkit@0.9.1(@sinclair/typebox@0.34.49):
+  apcore-toolkit@0.14.1(@sinclair/typebox@0.34.49):
     dependencies:
       '@sinclair/typebox': 0.34.49
       ajv: 8.20.0
-      apcore-js: 0.25.0
+      apcore-js: 0.32.3
       js-yaml: 4.3.0
 
   apdev-js@0.2.4(typescript@5.9.3):
@@ -2963,7 +2964,7 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mcp-embedded-ui@0.4.0:
+  mcp-embedded-ui@0.5.0:
     dependencies:
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
@@ -3397,11 +3398,11 @@ snapshots:
 
   tinyspy@4.0.4: {}
 
-  tiptap-apcore@file:../..(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(apcore-js@0.25.0)(apcore-mcp@0.17.0(@sinclair/typebox@0.34.49)(zod@3.25.76)):
+  tiptap-apcore@file:../../..(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(apcore-js@0.32.3)(apcore-mcp@0.23.4(@sinclair/typebox@0.34.49)(zod@3.25.76)):
     dependencies:
       '@tiptap/core': 2.27.2(@tiptap/pm@2.27.2)
-      apcore-js: 0.25.0
-      apcore-mcp: 0.17.0(@sinclair/typebox@0.34.49)(zod@3.25.76)
+      apcore-js: 0.32.3
+      apcore-mcp: 0.23.4(@sinclair/typebox@0.34.49)(zod@3.25.76)
 
   tldts-core@6.1.86: {}
 

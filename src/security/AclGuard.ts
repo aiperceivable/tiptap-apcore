@@ -68,6 +68,7 @@ export class AclGuard {
       callDepth: null,
       traceId: null,
       handlerError: null,
+      approvalRequired: false,
     });
   }
 

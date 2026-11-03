@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-11-03
+
+Dependency uplift to the current apcore governance train: apcore-js 0.32.3,
+apcore-mcp 0.23.4, apcore-toolkit 0.14.1. All 946 tests pass.
+
+### Changed
+
+- **Peer and dev floors raised** to `apcore-js >= 0.32.3` and
+  `apcore-mcp >= 0.23.4` (was `>= 0.26.0` / `>= 0.17.2`). apcore-toolkit
+  follows transitively at 0.14.1 through apcore-mcp.
+- **Node.js minimum raised to `>= 20.0.0`** (was `>= 18.0.0`), matching the
+  apcore-js / apcore-mcp / apcore-toolkit runtime requirement.
+- **`mcp-embedded-ui` patch moved from 0.4.0 to 0.5.0** (apcore-mcp 0.23.4
+  depends on `>= 0.5.0`); the ESM `__dirname` fix is unchanged.
+- **Demo dependency path corrected** from `file:../..` to `file:../../..` so
+  the pnpm/npm installs work from `examples/demo/{server,frontend}` after the
+  demo moved under `examples/`; the Dockerfiles now mirror the repository
+  layout at `/app/examples/demo/...`.
+
+### Fixed
+
+- **Audit entries now include the apcore-js 0.32 `approvalRequired` field**
+  (`false`, since tag/role ACL decisions never request approval).
+- **Preflight early returns now include `predictedChanges: []`**, required by
+  the apcore-js 0.32 `PreflightResult` contract.
+- **`EditorLike.commands` widened to `(...args: any[]) => boolean`** so a real
+  TipTap `Editor` (whose `SingleCommands` methods declare specific parameters)
+  is assignable under `strictFunctionTypes`; the demo frontend now builds.
+
 ## [0.5.0] - 2026-07-16
 
 ACL demo + dependency uplift to the aligned apcore-js 0.26.0 / apcore-mcp 0.17.2 governance train. All 946 tests pass.

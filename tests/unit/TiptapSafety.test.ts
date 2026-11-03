@@ -106,6 +106,7 @@ describe("TiptapAPCore.validate() — preview contract", () => {
     expect(result.valid).toBe(false);
     expect(result.errors[0]).toMatchObject({ code: "MODULE_NOT_FOUND" });
     expect(result.checks.find((c) => c.check === "module_exists")?.passed).toBe(false);
+    expect(result.predictedChanges).toEqual([]);
   });
 
   it("fails the acl check when the role denies the command", async () => {
@@ -136,6 +137,7 @@ describe("TiptapAPCore.validate() — preview contract", () => {
     const result = await apcore.validate("tiptap.format.toggleBold", {});
     expect(result.valid).toBe(false);
     expect(result.errors[0]).toMatchObject({ code: "EDITOR_NOT_READY" });
+    expect(result.predictedChanges).toEqual([]);
   });
 
   it("preflight() delegates to validate()", async () => {
@@ -175,6 +177,8 @@ describe("TiptapAPCore audit logging", () => {
     });
     expect(typeof log[0].timestamp).toBe("string");
     expect(log[1].reason).not.toBe("");
+    expect(log[0].approvalRequired).toBe(false);
+    expect(log[1].approvalRequired).toBe(false);
   });
 
   it("routes entries to a custom AuditLogger function", async () => {
@@ -187,6 +191,7 @@ describe("TiptapAPCore audit logging", () => {
 
     expect(entries).toHaveLength(1);
     expect(entries[0].decision).toBe("allow");
+    expect(entries[0].approvalRequired).toBe(false);
     // A custom sink means the built-in collector stays empty.
     expect(apcore.getAuditLog()).toEqual([]);
   });

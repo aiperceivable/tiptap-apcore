@@ -135,7 +135,7 @@ export class TiptapExecutor implements Executor {
     if (this.editor.isDestroyed) {
       checks.push({ check: "editor_ready", passed: false, error: { editorDestroyed: true } });
       errors.push({ code: ErrorCodes.EDITOR_NOT_READY, message: "Editor is not ready" });
-      return { valid: false, checks, requiresApproval: false, errors };
+      return { valid: false, checks, requiresApproval: false, errors, predictedChanges: [] };
     }
     checks.push({ check: "editor_ready", passed: true });
 
@@ -144,7 +144,7 @@ export class TiptapExecutor implements Executor {
     if (!descriptor) {
       checks.push({ check: "module_exists", passed: false });
       errors.push({ code: ErrorCodes.MODULE_NOT_FOUND, message: `Module '${moduleId}' not found` });
-      return { valid: false, checks, requiresApproval: false, errors };
+      return { valid: false, checks, requiresApproval: false, errors, predictedChanges: [] };
     }
     checks.push({ check: "module_exists", passed: true });
 

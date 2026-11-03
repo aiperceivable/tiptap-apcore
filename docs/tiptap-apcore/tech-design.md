@@ -1608,7 +1608,7 @@ tiptap-apcore/
     "@vitest/coverage-v8": "^3.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "license": "Apache-2.0",
   "files": ["dist", "README.md", "LICENSE"],

@@ -1,10 +1,13 @@
 allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:
-  - apcore-mcp@0.23.4 || 0.23.6
-  - apcore-toolkit@0.14.2
+  - apcore-mcp@0.23.4 || 0.23.6 || 0.23.7
+  - apcore-toolkit@0.14.2 || 0.14.3
+  - mcp-embedded-ui@0.5.1
 onlyBuiltDependencies:
   - esbuild
 
 patchedDependencies:
-  mcp-embedded-ui@0.5.0: patches/mcp-embedded-ui@0.5.0.patch
+  mcp-embedded-ui@0.5.1: patches/mcp-embedded-ui@0.5.1.patch
+overrides:
+  ip-address: 10.7.4

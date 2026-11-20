@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.6.3] - 2026-11-20
+
+### Changed
+
+- Refresh the development toolchain: `@tiptap/core`, `@tiptap/pm` and
+  `@tiptap/starter-kit` 2.27.3, and `vitest` / `@vitest/coverage-v8` 5.1.0.
+  No runtime or peer dependency changes.
+
 ## [0.6.1] - 2026-11-08
 
 ### Changed
